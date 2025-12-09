@@ -20,18 +20,28 @@ RUN npm run build
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
 
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Install gettext for envsubst (environment variable substitution)
+RUN apk add --no-cache gettext
+
+# Copy custom nginx configuration template
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose port 80
-EXPOSE 80
+# Copy startup script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Expose port 8080 (default for cloud platforms)
+EXPOSE 8080
+
+# Set default PORT environment variable
+ENV PORT=8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
+  CMD wget --quiet --tries=1 --spider http://localhost:${PORT:-8080}/health || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use custom entrypoint
+ENTRYPOINT ["/docker-entrypoint.sh"]
