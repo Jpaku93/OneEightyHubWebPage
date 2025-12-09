@@ -20,18 +20,28 @@ RUN npm run build
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
 
-# Install gettext for envsubst (environment variable substitution)
-RUN apk add --no-cache gettext
+# Install bash and gettext for envsubst
+RUN apk add --no-cache bash gettext
 
-# Copy custom nginx configuration template
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy nginx configuration template
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy startup script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# Create startup script inline to avoid line ending issues
+RUN echo '#!/bin/sh' > /start.sh && \
+    echo 'set -e' >> /start.sh && \
+    echo 'export PORT=${PORT:-8080}' >> /start.sh && \
+    echo 'echo "Starting nginx on port $PORT..."' >> /start.sh && \
+    echo 'envsubst '"'"'${PORT}'"'"' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf' >> /start.sh && \
+    echo 'cat /etc/nginx/conf.d/default.conf' >> /start.sh && \
+    echo 'nginx -t' >> /start.sh && \
+    echo 'exec nginx -g "daemon off;"' >> /start.sh && \
+    chmod +x /start.sh
 
 # Expose port 8080 (default for cloud platforms)
 EXPOSE 8080
@@ -39,9 +49,5 @@ EXPOSE 8080
 # Set default PORT environment variable
 ENV PORT=8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:${PORT:-8080}/health || exit 1
-
-# Use custom entrypoint
-ENTRYPOINT ["/docker-entrypoint.sh"]
+# Start nginx with our script
+CMD ["/start.sh"]
