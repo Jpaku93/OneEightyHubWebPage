@@ -1,26 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Navigation from './components/Navigation';
-import Hero from './components/Hero';
-import Hub from './components/Hub';
-import Community from './components/Community';
-import Footer from './components/Footer';
 import HubPage from './components/HubPage';
-import Events from './components/Events';
 import About from './components/About';
 import AdminDashboard from './components/AdminDashboard';
+import AdminLogin from './components/AdminLogin';
+import HomePage from './pages/HomePage';
 import { NavItem } from './types';
 import { ImageProvider } from './contexts/ImageContext';
-
-type View = 'HOME' | 'HUB' | 'ABOUT' | 'ADMIN';
+import { EventVisibilityProvider } from './contexts/EventVisibilityContext';
+import { EventPostersProvider } from './contexts/EventPostersContext';
+import { EventButtonsProvider } from './contexts/EventRegistrationContext';
+import { EventBannersProvider } from './contexts/EventBannersContext';
+import { GalleryProvider } from './contexts/GalleryContext';
 
 const App: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<NavItem>(NavItem.HOME);
-  const [currentView, setCurrentView] = useState<View>('HOME');
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [isAtTop, setIsAtTop] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastScrollTopRef = useRef(0);
+
+  // Update active tab based on route
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/') setActiveTab(NavItem.HOME);
+    else if (path === '/hub') setActiveTab(NavItem.HUB);
+    else if (path === '/about') setActiveTab(NavItem.ABOUT);
+    else if (path === '/admin') setActiveTab(NavItem.ADMIN);
+  }, [location.pathname]);
 
   // Scroll Handler
   useEffect(() => {
@@ -53,19 +65,16 @@ const App: React.FC = () => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add('tech-reveal-active');
-            // Optional: Stop observing once revealed
-            // observer.unobserve(entry.target); 
           }
         });
       },
       {
-        root: scrollContainerRef.current, // Observe within our scroll container
-        threshold: 0.1, // Trigger when 10% visible
+        root: scrollContainerRef.current,
+        threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
       }
     );
 
-    // Slight delay to ensure DOM is ready after view switch
     const timeout = setTimeout(() => {
       const elements = document.querySelectorAll('.tech-reveal');
       elements.forEach((el) => observer.observe(el));
@@ -75,7 +84,7 @@ const App: React.FC = () => {
       clearTimeout(timeout);
       observer.disconnect();
     };
-  }, [currentView]); // Re-run when view changes
+  }, [location.pathname]);
 
   const scrollToTop = () => {
     if (scrollContainerRef.current) {
@@ -87,107 +96,126 @@ const App: React.FC = () => {
     const key = id.toUpperCase();
 
     if (key === 'HOME') {
-      setCurrentView('HOME');
-      setActiveTab(NavItem.HOME);
+      navigate('/');
       scrollToTop();
     } else if (key === 'HUB') {
-      setCurrentView('HUB');
-      setActiveTab(NavItem.HUB);
+      navigate('/hub');
       scrollToTop();
     } else if (key === 'ABOUT') {
-      setCurrentView('ABOUT');
-      setActiveTab(NavItem.ABOUT);
+      navigate('/about');
       scrollToTop();
     } else if (key === 'ADMIN') {
-      setCurrentView('ADMIN');
-      setActiveTab(NavItem.ADMIN);
+      navigate('/admin');
       scrollToTop();
     } else if (key === 'CALENDAR_LINK') {
-      // Special case for calendar deep link to Hub page
-      setCurrentView('HUB');
-      setActiveTab(NavItem.HUB);
+      navigate('/hub');
       setTimeout(() => {
         const element = document.getElementById('calendar-section');
         if (element && scrollContainerRef.current) {
-            // Calculate position relative to container
-            const top = element.getBoundingClientRect().top + scrollContainerRef.current.scrollTop - 100; // -100 for header offset
-            scrollContainerRef.current.scrollTo({ top, behavior: 'smooth' });
+          const top = element.getBoundingClientRect().top + scrollContainerRef.current.scrollTop - 100;
+          scrollContainerRef.current.scrollTo({ top, behavior: 'smooth' });
         }
       }, 100);
     }
   };
 
+  const handleNavigateToAbout = () => {
+    navigate('/about');
+    scrollToTop();
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdminAuthenticated(false);
+    navigate('/');
+  };
+
+  const isAdminRoute = location.pathname === '/admin';
+
   return (
     <ImageProvider>
-      <div className="relative h-screen w-full bg-black overflow-hidden font-sans selection:bg-brand-lime selection:text-black">
-        
-        {currentView !== 'ADMIN' && (
-          <Navigation 
-            activeTab={activeTab} 
-            setActiveTab={setActiveTab} 
-            isNavVisible={isNavVisible}
-            isAtTop={isAtTop}
-            onNavClick={handleNavClick}
-          />
-        )}
+      <EventVisibilityProvider>
+        <EventPostersProvider>
+          <EventButtonsProvider>
+            <EventBannersProvider>
+              <GalleryProvider>
+                <div className="relative h-screen w-full bg-black overflow-hidden font-sans selection:bg-brand-lime selection:text-black">
 
-        {/* Main Scroll Container */}
-        <div 
-          ref={scrollContainerRef}
-          className="h-full w-full overflow-y-auto overflow-x-hidden scroll-smooth"
-        >
-          {currentView === 'HOME' && (
-            <>
-              <div id="home">
-                <Hero scrollOffset={scrollOffset} />
-              </div>
-              
-              {/* Events Feature Section */}
-              <div id="events" className="relative z-20">
-                 <Events 
-                   scrollOffset={scrollOffset} 
-                   onViewCalendar={() => handleNavClick('CALENDAR_LINK')}
-                 />
-              </div>
+                  {!isAdminRoute && (
+                    <Navigation
+                      activeTab={activeTab}
+                      setActiveTab={setActiveTab}
+                      isNavVisible={isNavVisible}
+                      isAtTop={isAtTop}
+                      onNavClick={handleNavClick}
+                    />
+                  )}
 
-              <div id="hub">
-                <Hub 
-                  scrollOffset={scrollOffset} 
-                  onNavigate={() => handleNavClick('HUB')} 
-                />
-              </div>
+                  {/* Main Scroll Container */}
+                  <div
+                    ref={scrollContainerRef}
+                    className="h-full w-full overflow-y-auto overflow-x-hidden scroll-smooth"
+                  >
+                    <Routes>
+                      <Route
+                        path="/"
+                        element={
+                          <HomePage
+                            scrollOffset={scrollOffset}
+                            onNavigateToHub={() => handleNavClick('HUB')}
+                            onNavigateToAbout={handleNavigateToAbout}
+                            onViewCalendar={() => handleNavClick('CALENDAR_LINK')}
+                            onAdminClick={() => handleNavClick('ADMIN')}
+                          />
+                        }
+                      />
+                      <Route
+                        path="/hub"
+                        element={<HubPage onBack={() => navigate('/')} />}
+                      />
+                      <Route
+                        path="/about"
+                        element={<About />}
+                      />
+                      <Route
+                        path="/admin"
+                        element={
+                          isAdminAuthenticated ? (
+                            <AdminDashboard onBack={handleAdminLogout} />
+                          ) : (
+                            <AdminLogin onLogin={() => setIsAdminAuthenticated(true)} />
+                          )
+                        }
+                      />
+                      <Route
+                        path="*"
+                        element={
+                          <HomePage
+                            scrollOffset={scrollOffset}
+                            onNavigateToHub={() => handleNavClick('HUB')}
+                            onNavigateToAbout={handleNavigateToAbout}
+                            onViewCalendar={() => handleNavClick('CALENDAR_LINK')}
+                            onAdminClick={() => handleNavClick('ADMIN')}
+                          />
+                        }
+                      />
+                    </Routes>
+                  </div>
 
-              <div id="stories">
-                <Community scrollOffset={scrollOffset} />
-              </div>
-
-              <Footer onAdminClick={() => handleNavClick('ADMIN')} />
-            </>
-          )}
-          
-          {currentView === 'HUB' && (
-            <HubPage onBack={() => handleNavClick('HOME')} />
-          )}
-
-          {currentView === 'ABOUT' && (
-            <About />
-          )}
-
-          {currentView === 'ADMIN' && (
-            <AdminDashboard onBack={() => handleNavClick('HOME')} />
-          )}
-        </div>
-
-        {/* Mouse Follower / Cursor Glow */}
-        <div 
-          className="fixed pointer-events-none z-0 w-[500px] h-[500px] bg-gradient-to-r from-brand-orange/5 to-brand-purple/5 rounded-full blur-[100px] opacity-50 mix-blend-screen transition-transform duration-1000 ease-out"
-          style={{ 
-            top: -250, 
-            left: -250,
-            transform: `translate(${scrollOffset * 0.2}px, ${scrollOffset * 0.1}px)` 
-          }}
-        />
-      </div>
+                  {/* Mouse Follower / Cursor Glow */}
+                  <div
+                    className="fixed pointer-events-none z-0 w-[500px] h-[500px] bg-gradient-to-r from-brand-orange/5 to-brand-purple/5 rounded-full blur-[100px] opacity-50 mix-blend-screen transition-transform duration-1000 ease-out"
+                    style={{
+                      top: -250,
+                      left: -250,
+                      transform: `translate(${scrollOffset * 0.2}px, ${scrollOffset * 0.1}px)`
+                    }}
+                  />
+                </div>
+              </GalleryProvider>
+            </EventBannersProvider>
+          </EventButtonsProvider>
+        </EventPostersProvider>
+      </EventVisibilityProvider>
     </ImageProvider>
   );
 };

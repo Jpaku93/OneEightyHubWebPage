@@ -8,7 +8,7 @@ interface ImageState {
 
 const defaultImages: ImageState = {
   hero: {
-    background: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80',
+    background: '/images/hero-background.jpg',
     abstract: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
   },
   events: {
@@ -16,13 +16,13 @@ const defaultImages: ImageState = {
     ticket_link: ''
   },
   hub: {
-    main: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80'
+    main: '/images/OneEigthHub.jpg'
   },
   community: {
-    grid1: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    grid2: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-    grid3: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-    grid4: 'https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+    grid1: '/images/crew.jpg',
+    grid2: '/images/crew2.jpg',
+    grid3: '/images/crew3.jpg',
+    grid4: '/images/crew4.jpg'
   },
   hubPage: {
     heroBg: 'https://images.unsplash.com/photo-1524601500432-1e1a4c71d692?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80',

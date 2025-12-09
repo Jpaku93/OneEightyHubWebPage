@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, ArrowRight, Sun, Moon, ShoppingBag, Check, MapPin } from 'lucide-react';
+import { Calendar, ArrowRight, ArrowLeft, Sun, Moon, ShoppingBag, Check, MapPin, X, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import Footer from './Footer';
 import { CalendarEvent } from '../types';
 import { fetchCalendarEvents } from '../utils/calendar';
 import { useImages } from '../contexts/ImageContext';
+import { useEventVisibility } from '../contexts/EventVisibilityContext';
+import { useEventPosters } from '../contexts/EventPostersContext';
+import { useEventButtons } from '../contexts/EventRegistrationContext';
+import Gallery from './Gallery';
 
 interface HubPageProps {
   onBack: () => void;
@@ -11,8 +15,14 @@ interface HubPageProps {
 
 const HubPage: React.FC<HubPageProps> = ({ onBack }) => {
   const { images } = useImages();
+  const { isEventVisible } = useEventVisibility();
+  const { getPosterUrl } = useEventPosters();
+  const { getRegisterUrl, getBookSeatsUrl } = useEventButtons();
   const [calendarDark, setCalendarDark] = useState(true);
   const [calendarSynced, setCalendarSynced] = useState(false);
+  const [selectedPoster, setSelectedPoster] = useState<string | null>(null);
+  const [showAllEvents, setShowAllEvents] = useState(false);
+  const [requestEmail, setRequestEmail] = useState('');
 
   // Initialize with detailed fallback data
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([
@@ -53,11 +63,44 @@ const HubPage: React.FC<HubPageProps> = ({ onBack }) => {
     loadEvents();
   }, []);
 
+  // Generate event ID from event data (same as in AdminDashboard)
+  const getEventId = (event: CalendarEvent): string => {
+    return `${event.date}-${event.title}`.replace(/\s+/g, '-').toLowerCase();
+  };
+
+  // Filter events based on visibility
+  const visibleEvents = upcomingEvents.filter(event => isEventVisible(getEventId(event)));
+
   const handleSyncCalendar = () => {
+    if (!requestEmail.trim()) {
+      alert('Please enter your email address');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(requestEmail)) {
+      alert('Please enter a valid email address');
+      return;
+    }
+
+    const subject = 'Calendar Access Request - 180 Hub';
+    const body = `Hi,
+
+I would like to request access to the 180 Hub calendar.
+
+My email address: ${requestEmail}
+
+Thank you!`;
+
+    const mailtoLink = `mailto:jrlpaku@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    window.location.href = mailtoLink;
+
     setCalendarSynced(true);
-    window.open('https://calendar.google.com/calendar/render?cid=mmvpsnrd4lb1ibgjrdgg9e00p4@group.calendar.google.com', '_blank');
     setTimeout(() => {
       setCalendarSynced(false);
+      setRequestEmail('');
     }, 3000);
   };
 
@@ -86,79 +129,118 @@ const HubPage: React.FC<HubPageProps> = ({ onBack }) => {
     <div className="min-h-screen bg-brand-black text-white animate-fadeIn">
       {/* Header / Hero Section */}
       <div className="relative min-h-[60vh] md:min-h-[85vh] py-32 overflow-hidden flex items-center justify-center bg-brand-charcoal">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center grayscale opacity-40"
           style={{ backgroundImage: `url('${images.hubPage.heroBg}')` }}
         ></div>
         <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/50 to-transparent"></div>
 
+        {/* Back Button */}
+        <button
+          onClick={onBack}
+          className="absolute top-8 left-8 z-20 flex items-center gap-2 text-white hover:text-brand-lime transition-colors group"
+        >
+          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="font-bold uppercase tracking-wider text-sm">Back to Home</span>
+        </button>
+
         <div className="relative z-10 text-center px-4 max-w-5xl mx-auto tech-reveal">
-           <h1 className="text-7xl md:text-9xl font-display font-bold uppercase tracking-tighter text-white mb-6 drop-shadow-2xl">
-             THE <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-purple via-brand-orange to-brand-lime">HUB</span>
-           </h1>
-           <p className="text-xl md:text-2xl text-gray-300 font-light tracking-widest border-t border-b border-white/20 py-4 inline-block uppercase">
-             Where Culture Meets Kingdom
-           </p>
+          <h1 className="text-7xl md:text-9xl font-display font-bold uppercase tracking-tighter text-white mb-6 drop-shadow-2xl">
+            THE <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-purple via-brand-orange to-brand-lime">HUB</span>
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-300 font-light tracking-widest border-t border-b border-white/20 py-4 inline-block uppercase">
+            Where Culture Meets Kingdom
+          </p>
         </div>
       </div>
 
       {/* Google Calendar Integration & Up Next */}
       <section id="calendar-section" className="py-20 px-4 md:px-8 bg-brand-black flex flex-col items-center justify-center border-t border-white/10">
         <div className="max-w-7xl w-full">
-          <div className="flex items-end justify-between mb-8 border-b border-white/10 pb-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 border-b border-white/10 pb-4 gap-4">
             <h2 className="text-4xl md:text-6xl font-display font-bold text-white uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
-              Calendar
+              Upcoming Events
             </h2>
-            <div className="flex items-center gap-4">
+
+            {/* Compact Stay Updated - Top Right */}
+            <div className="flex items-center gap-3">
+              <input
+                type="email"
+                value={requestEmail}
+                onChange={(e) => setRequestEmail(e.target.value)}
+                placeholder="Your email"
+                disabled={calendarSynced}
+                className="bg-black/50 border border-brand-purple/30 rounded px-3 py-2 text-white placeholder-gray-500 focus:border-brand-purple focus:outline-none transition-colors text-sm w-48"
+              />
               <button
-                onClick={() => setCalendarDark(!calendarDark)}
-                className="p-2 rounded-full hover:bg-white/10 transition-colors text-brand-lime flex items-center gap-2 text-xs font-mono"
+                onClick={handleSyncCalendar}
+                disabled={calendarSynced}
+                className={`
+                  text-xs font-bold uppercase py-2 px-4 rounded transition-all duration-300 whitespace-nowrap
+                  ${calendarSynced
+                    ? 'bg-brand-lime text-black cursor-default'
+                    : 'bg-brand-purple text-white hover:bg-brand-purple/80'
+                  }
+                `}
               >
-                {calendarDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                {calendarDark ? "LIGHT" : "DARK"}
+                {calendarSynced ? (
+                  <span className="flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Sent!
+                  </span>
+                ) : (
+                  'Get Calendar'
+                )}
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Calendar Column */}
-            <div className="lg:col-span-2 bg-brand-charcoal p-2 rounded-xl border border-white/10 shadow-[0_0_30px_rgba(139,0,255,0.1)]">
-              <div className={`relative w-full h-[600px] ${calendarDark ? 'bg-brand-black' : 'bg-white'} rounded-lg overflow-hidden transition-colors duration-300`}>
-                <iframe
-                  src="https://calendar.google.com/calendar/embed?height=600&wkst=1&bgcolor=%23ffffff&ctz=UTC&src=bW12cHNucmQ0bGIxaWJnanJkZ2c5ZTAwcDRAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&color=%238E24AA&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0"
-                  style={{
-                    borderWidth: 0,
-                    filter: calendarDark ? 'invert(1) hue-rotate(180deg)' : 'none',
-                    transition: 'filter 0.3s ease'
-                  }}
-                  width="100%"
-                  height="100%"
-                  frameBorder="0"
-                  scrolling="no"
-                  title="One Eighty Hub Calendar"
-                ></iframe>
-              </div>
-            </div>
+          {/* Event Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visibleEvents.slice(0, showAllEvents ? 9 : 3).map((event, i) => {
+              // Get day of week from rawDate
+              const dayOfWeek = event.rawDate ? event.rawDate.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase() : '';
+              const eventId = getEventId(event);
+              const posterUrl = getPosterUrl(eventId);
 
-            {/* Up Next Column */}
-            <div className="lg:col-span-1 h-[618px] flex flex-col">
-              <div className="flex items-center gap-2 mb-4 shrink-0">
-                <div className="w-2 h-2 bg-brand-orange rounded-full animate-pulse"></div>
-                <h3 className="text-xl font-bold uppercase tracking-wider text-white">Up Next</h3>
-              </div>
+              return (
+                <div key={i} className="group bg-brand-charcoal rounded-lg border-l-4 border-brand-orange hover:bg-white/5 hover:border-brand-lime transition-all cursor-default flex flex-col overflow-hidden">
+                  {/* Poster Image (if available) */}
+                  {posterUrl && (
+                    <div
+                      onClick={() => setSelectedPoster(posterUrl)}
+                      className="relative w-full h-48 bg-brand-black cursor-pointer group/poster overflow-hidden"
+                    >
+                      <img
+                        src={posterUrl}
+                        alt={`${event.title} Poster`}
+                        className="w-full h-full object-cover group-hover/poster:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal via-transparent to-transparent opacity-60"></div>
+                      <div className="absolute bottom-2 right-2 bg-brand-lime/90 text-black px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
+                        <ImageIcon className="w-3 h-3" />
+                        VIEW POSTER
+                      </div>
+                    </div>
+                  )}
 
-              <div className="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-hide md:scrollbar-default">
-                {upcomingEvents.slice(0, 10).map((event, i) => (
-                  <div key={i} className="group bg-brand-charcoal p-6 rounded-lg border-l-4 border-brand-orange hover:bg-white/5 transition-all cursor-default flex flex-col shrink-0">
-                    <span className="inline-block w-fit bg-brand-orange/20 text-brand-orange text-xs font-bold px-2 py-1 rounded mb-3">
-                      {event.date}
-                    </span>
+                  {/* Event Details */}
+                  <div className="p-6 flex flex-col flex-1">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="inline-block bg-brand-orange/20 text-brand-orange text-xs font-bold px-2 py-1 rounded">
+                        {event.date}
+                      </span>
+                      {dayOfWeek && (
+                        <span className="text-xs font-mono text-brand-lime border border-brand-lime/30 px-2 py-1 rounded-full bg-brand-black/50">
+                          {dayOfWeek}
+                        </span>
+                      )}
+                    </div>
                     <h4 className="text-2xl font-display font-bold text-white mb-2 group-hover:text-brand-orange transition-colors">
                       {event.title}
                     </h4>
 
                     {event.description && (
-                      <p className="text-sm text-gray-500 mb-4 whitespace-pre-line leading-relaxed line-clamp-3 group-hover:line-clamp-none transition-all">
+                      <p className="text-sm text-gray-400 mb-4 whitespace-pre-line leading-relaxed line-clamp-3 group-hover:line-clamp-none transition-all">
                         {event.description}
                       </p>
                     )}
@@ -171,43 +253,78 @@ const HubPage: React.FC<HubPageProps> = ({ onBack }) => {
                         <MapPin className="w-4 h-4 text-brand-purple" /> {event.location}
                       </span>
                     </div>
-                  </div>
-                ))}
 
-                <div className="bg-gradient-to-br from-brand-purple/20 to-brand-black p-6 rounded-lg border border-brand-purple/30 text-center shrink-0">
-                  <h4 className="text-brand-purple font-bold uppercase tracking-widest mb-2">Don't Miss Out</h4>
-                  <p className="text-xs text-gray-400 mb-4">Subscribe to our calendar to get notified automatically.</p>
-                  <button
-                    onClick={handleSyncCalendar}
-                    disabled={calendarSynced}
-                    className={`
-                         w-full text-xs font-bold uppercase py-3 rounded transition-all duration-300 relative overflow-hidden group/sync
-                         ${calendarSynced
-                        ? 'bg-brand-lime text-black cursor-default border border-brand-lime shadow-[0_0_20px_rgba(204,255,0,0.3)]'
-                        : 'bg-brand-purple text-white hover:bg-white hover:text-brand-purple shadow-[0_0_15px_rgba(139,0,255,0.4)] hover:shadow-[0_0_25px_rgba(139,0,255,0.6)] animate-pulse'
-                      }
-                       `}
-                  >
-                    {calendarSynced ? (
-                      <span className="flex items-center justify-center gap-2 animate-fadeIn">
-                        <Check className="w-4 h-4" /> Synced!
-                      </span>
-                    ) : (
-                      <>
-                        <span className="relative z-10">Sync Calendar</span>
-                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/sync:translate-y-0 transition-transform duration-300 ease-out" />
-                      </>
-                    )}
-                  </button>
+                    {/* Registration/Booking Buttons */}
+                    {(() => {
+                      const registerUrl = getRegisterUrl(eventId);
+                      const bookSeatsUrl = getBookSeatsUrl(eventId);
+
+                      if (!registerUrl && !bookSeatsUrl) return null;
+
+                      return (
+                        <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-2">
+                          {registerUrl && (
+                            <a
+                              href={registerUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-full bg-brand-lime text-black px-4 py-2.5 rounded font-bold uppercase tracking-wider hover:bg-brand-orange transition-colors flex items-center justify-center gap-2 shadow-lg text-sm"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Register Now
+                            </a>
+                          )}
+                          {bookSeatsUrl && (
+                            <a
+                              href={bookSeatsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-full bg-brand-purple text-white px-4 py-2.5 rounded font-bold uppercase tracking-wider hover:bg-brand-purple/80 transition-colors flex items-center justify-center gap-2 shadow-lg text-sm"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Book Seats
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
+
+          {/* Show More/Less Button */}
+          {visibleEvents.length > 3 && (
+            <div className="mt-8 text-center">
+              <button
+                onClick={() => setShowAllEvents(!showAllEvents)}
+                className="bg-brand-orange text-black px-8 py-3 rounded font-bold uppercase tracking-widest hover:bg-brand-lime transition-colors flex items-center gap-2 mx-auto shadow-lg"
+              >
+                {showAllEvents ? (
+                  <>
+                    Show Less
+                    <ArrowRight className="w-4 h-4 rotate-90" />
+                  </>
+                ) : (
+                  <>
+                    Show More Events ({Math.min(visibleEvents.length - 3, 6)} more)
+                    <ArrowRight className="w-4 h-4 -rotate-90" />
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
         </div>
-      </section>
+      </section >
+
+      <Gallery />
 
       {/* Merch Section */}
-      <section className="py-24 bg-brand-black relative">
+      < section className="py-24 bg-brand-black relative" >
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/concrete-wall.png')] opacity-5"></div>
         <div className="max-w-7xl mx-auto px-8 relative z-10">
           <div className="flex flex-col md:flex-row items-end justify-between mb-12 border-b-2 border-brand-orange/30 pb-4">
@@ -250,13 +367,13 @@ const HubPage: React.FC<HubPageProps> = ({ onBack }) => {
             View All Collection
           </button>
         </div>
-      </section>
+      </section >
 
       {/* CTA: Where Do You Fit? */}
-      <div className="py-24 px-8 bg-brand-charcoal relative overflow-hidden border-t border-white/5">
+      < div className="py-24 px-8 bg-brand-charcoal relative overflow-hidden border-t border-white/5" >
 
         {/* Decorative Blurs */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-purple/10 blur-[100px] rounded-full pointer-events-none" />
+        < div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-purple/10 blur-[100px] rounded-full pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-brand-orange/10 blur-[100px] rounded-full pointer-events-none" />
 
         <div className="max-w-4xl mx-auto relative z-10 text-center">
@@ -294,7 +411,30 @@ const HubPage: React.FC<HubPageProps> = ({ onBack }) => {
       </div>
 
       <Footer />
-    </div>
+
+      {/* Poster Modal */}
+      {selectedPoster && (
+        <div
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedPoster(null)}
+        >
+          <button
+            onClick={() => setSelectedPoster(null)}
+            className="absolute top-4 right-4 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors z-10"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+          <div className="max-w-4xl max-h-[90vh] overflow-auto">
+            <img
+              src={selectedPoster}
+              alt="Event Poster Full Size"
+              className="w-full h-auto rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
+    </div >
   );
 };
 

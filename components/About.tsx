@@ -214,15 +214,15 @@ const About: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-brand-black text-white pt-24 animate-fadeIn">
-      
+
       {/* Hero Section */}
       <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden py-10">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center grayscale opacity-40"
           style={{ backgroundImage: `url('${images.about.heroBg}')` }}
         ></div>
         <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/50 to-transparent"></div>
-        
+
         <div className="relative z-10 text-center max-w-4xl px-6 tech-reveal">
           <h1 className="text-5xl md:text-7xl font-display font-bold uppercase tracking-tighter mb-4">
             About <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange to-brand-purple">180 Hub</span>
@@ -245,8 +245,8 @@ const About: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {displayedMinistries.map((item, idx) => (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 onClick={() => setSelectedMinistry(item)}
                 className={`
                   group relative h-[450px] overflow-hidden bg-brand-black border-t-4 ${item.colorClass}
@@ -254,15 +254,15 @@ const About: React.FC = () => {
                 `}
               >
                 {/* Background Image */}
-                <img 
-                  src={item.image} 
-                  alt={item.title} 
-                  className="absolute inset-0 w-full h-full object-cover transition-all duration-700 opacity-50 grayscale group-hover:grayscale-0 group-hover:opacity-80 group-hover:scale-110" 
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="absolute inset-0 w-full h-full object-cover transition-all duration-700 opacity-50 grayscale group-hover:grayscale-0 group-hover:opacity-80 group-hover:scale-110"
                 />
-                
+
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/70 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500" />
-                
+
                 {/* Icon Badge */}
                 <div className={`absolute top-6 right-6 p-3 bg-black/50 backdrop-blur-md rounded-full border border-white/10 ${item.textAccent} transition-transform duration-500 group-hover:scale-110`}>
                   {item.icon}
@@ -270,7 +270,7 @@ const About: React.FC = () => {
 
                 {/* Content Wrapper */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 flex flex-col justify-end">
-                  
+
                   {/* Title */}
                   <h3 className="text-3xl font-display font-bold text-white uppercase mb-2 leading-none drop-shadow-lg transform transition-transform duration-500 group-hover:-translate-y-2">
                     {item.title}
@@ -286,7 +286,7 @@ const About: React.FC = () => {
                   </div>
 
                   {/* Button */}
-                  <button 
+                  <button
                     className={`
                     w-fit text-xs font-bold uppercase tracking-widest flex items-center gap-2 
                     ${item.textAccent} border border-transparent 
@@ -303,15 +303,15 @@ const About: React.FC = () => {
 
           {/* View All Button */}
           <div className="flex justify-center mt-12">
-              <button 
-                  onClick={() => setShowAllMinistries(!showAllMinistries)}
-                  className="group relative px-10 py-4 bg-transparent border border-white/20 text-white font-bold uppercase tracking-widest hover:bg-white hover:text-black hover:border-transparent transition-all duration-300 rounded-sm"
-              >
-                  <span className="relative z-10 flex items-center gap-2">
-                      {showAllMinistries ? 'View Less' : 'View All Teams'} 
-                      <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showAllMinistries ? 'rotate-180' : ''}`} />
-                  </span>
-              </button>
+            <button
+              onClick={() => setShowAllMinistries(!showAllMinistries)}
+              className="group relative px-10 py-4 bg-transparent border border-white/20 text-white font-bold uppercase tracking-widest hover:bg-white hover:text-black hover:border-transparent transition-all duration-300 rounded-sm"
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                {showAllMinistries ? 'View Less' : 'View All Teams'}
+                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showAllMinistries ? 'rotate-180' : ''}`} />
+              </span>
+            </button>
           </div>
         </div>
       </section>
@@ -325,8 +325,8 @@ const About: React.FC = () => {
           <div className="space-y-2">
             {faqs.map((faq, index) => (
               <div key={index} className="border-b border-white/10 last:border-0">
-                <button 
-                  onClick={() => toggleFaq(index)} 
+                <button
+                  onClick={() => toggleFaq(index)}
                   className="w-full py-6 flex items-center justify-between text-left focus:outline-none group"
                 >
                   <span className="font-display font-bold uppercase text-lg md:text-xl text-white group-hover:text-brand-lime transition-colors pr-8">
@@ -351,7 +351,7 @@ const About: React.FC = () => {
 
       {/* CTA */}
       <section className="min-h-[40vh] flex items-center justify-center py-20 px-8 text-center bg-[url('https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center grayscale relative">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center grayscale opacity-40"
           style={{ backgroundImage: `url('${images.about.ctaBg}')` }}
         ></div>
@@ -361,11 +361,14 @@ const About: React.FC = () => {
           <p className="text-lg md:text-xl text-white/80 mb-10">Your story doesn't have to stay where it is. If you're ready for a 180°, we'd love to meet you.</p>
           <div className="flex flex-col md:flex-row gap-6 justify-center">
             <button className="bg-white text-black px-8 py-4 md:px-10 font-bold uppercase tracking-widest hover:bg-brand-lime transition-colors">
-              Come to a Night
+              Plan a Visit
             </button>
-            <button className="bg-transparent border-2 border-white text-white px-8 py-4 md:px-10 font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-colors">
+            <a
+              href="mailto:jrlpaku@gmail.com"
+              className="bg-transparent border-2 border-white text-white px-8 py-4 md:px-10 font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-colors inline-block text-center"
+            >
               Ask a Question
-            </button>
+            </a>
           </div>
         </div>
       </section>

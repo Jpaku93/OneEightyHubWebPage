@@ -1,3 +1,4 @@
+
 import { CalendarEvent } from '../types';
 
 // Helper to parse ICS date string (e.g., 20251124T190000Z)
@@ -27,7 +28,7 @@ export const parseICS = (icsData: string): CalendarEvent[] => {
     // 1. Unfold lines (ICS allows splitting long lines with CRLF + space/tab)
     const rawLines = icsData.split(/\r\n|\n|\r/);
     const lines: string[] = [];
-    
+
     for (const line of rawLines) {
         if (line.startsWith(' ') || line.startsWith('\t')) {
             // Append to previous line, removing the leading whitespace
