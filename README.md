@@ -110,3 +110,32 @@ The application will be available at `http://localhost:3000`
 - [ ] SEO optimization with React Helmet
 - [ ] Analytics integration
 - [ ] Error boundaries for better error handling
+
+## 🚀 Deployment
+
+This application is optimized for static web deployment. See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for comprehensive deployment instructions.
+
+### Quick Deploy
+
+```bash
+# Build for production
+npm run build
+
+# Deploy to Netlify
+npm run deploy:netlify
+
+# Deploy to Vercel
+npm run deploy:vercel
+
+# Deploy with Docker
+npm run deploy:docker
+```
+
+The production build is located in the `dist/` folder and includes:
+- ✅ Optimized and minified code
+- ✅ Code splitting for faster loading
+- ✅ Asset hashing for cache busting
+- ✅ Gzip-ready static files
+
+**Supported Platforms**: Netlify, Vercel, GitHub Pages, Cloudflare Pages, Docker, or any static hosting service.
+

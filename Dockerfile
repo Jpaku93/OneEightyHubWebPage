@@ -1,16 +1,15 @@
-# Multi-stage build for OneEightyHub Web Application
+# Multi-stage build for optimized production image
 
 # Stage 1: Build the application
 FROM node:20-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --legacy-peer-deps
+RUN npm ci --only=production=false
 
 # Copy source code
 COPY . .
@@ -18,7 +17,7 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Stage 2: Serve with nginx
+# Stage 2: Serve with Nginx
 FROM nginx:alpine
 
 # Copy custom nginx configuration
@@ -32,7 +31,7 @@ EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+  CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
